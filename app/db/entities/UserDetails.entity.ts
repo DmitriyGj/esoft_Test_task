@@ -7,6 +7,9 @@ export class User_details {
     user_details_id: number
 
     @Column()
+    name:string
+
+    @Column()
     patronymic: string
 
     @Column()

@@ -1,19 +1,16 @@
 import * as express from 'express'
 import Config from './app/config/app.config'
 import DataBase from './app/db/datasource';
-import { User } from './app/db/entities';
+import Router from './app/router';
+import * as bodyParser from 'body-parser'
+
 DataBase.initialize().then(() => console.log('asds'))
 const app = express();
-app.get('/', async (requset, response) => {
-    const result = await DataBase.getRepository(User).find({
-        relations:{
-            role:true, 
-            user_details:true
-        }
-    });
-    console.log(result)
-    response.send(result)
-});
+app.use(bodyParser.json())
+app.use(bodyParser.urlencoded({extended:true}));
+app.use('/api',Router);
+
+
 
 
 

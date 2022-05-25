@@ -1,9 +1,7 @@
 import { Entity, PrimaryGeneratedColumn, Column, OneToOne, JoinColumn, ManyToOne, OneToMany, JoinTable, Relation, Unique } from "typeorm"
 import { User_details } from './UserDetails.entity';
-import { Role } from './Role.entity';
 
 @Entity()
-@Unique(['login'])
 
 export class User {
     @PrimaryGeneratedColumn()
@@ -13,17 +11,30 @@ export class User {
     title: string
 
     @Column()
-    date_range: Date
+    completed:boolean
 
-    @ManyToOne(() => Role)
-    @JoinColumn(
-        { name: "role_id", referencedColumnName: "role_id" }
-    )
-    role: Relation<Role>
+    @Column({type:'date'})
+    creation_date: string
+
+    @Column({type:'date'})
+    update_date: string
+
+    @Column({type:'time with time zone'})
+    start_date:Date
+
+    @Column({type:'time with time zone'})
+    end_date:Date
 
     @OneToOne(() => User_details)
-    @JoinColumn(
-        { name: "user_details_id", referencedColumnName: "user_details_id" }
-    )
-    user_details: Relation<User_details>
+    @JoinColumn({
+        name:'executor_id', referencedColumnName:'executor_id'
+    })
+    executor:Relation<User_details>
+
+    @OneToOne(() => User)
+    @JoinColumn({
+        name:'creator_id', referencedColumnName:'creator_id'
+    })
+    creator:Relation<User>
+
 }

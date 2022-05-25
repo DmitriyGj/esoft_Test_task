@@ -1,5 +1,5 @@
 import { DataSource } from 'typeorm';
-import {User, Role, User_details} from './entities';
+import {User, role, User_details} from './entities';
 
 const PostgresDataSource = new DataSource({
     type: "postgres",
@@ -8,7 +8,7 @@ const PostgresDataSource = new DataSource({
     username: "postgres",
     password: "lol355183",
     database: "esoft",
-    entities: [User, Role, User_details],
+    entities: [User, role, User_details],
 })
 
 

@@ -1,9 +1,11 @@
-import { Entity, PrimaryGeneratedColumn, Column, OneToOne, JoinColumn, ManyToOne, OneToMany, JoinTable } from "typeorm"
+import { Entity, PrimaryGeneratedColumn, Column, OneToOne, JoinColumn, ManyToOne, OneToMany, JoinTable, Relation, Unique } from "typeorm"
 import { User_details } from './UserDetails.entity';
 import { Role } from './Role.entity';
 
 @Entity()
-export class user {
+@Unique(['login'])
+
+export class User {
     @PrimaryGeneratedColumn()
     user_id: number
 
@@ -14,9 +16,8 @@ export class user {
     password: string
 
     @ManyToOne(() => Role)
-    @JoinColumn([
-        { name: "role_id", referencedColumnName: "role_id" },
+    @JoinColumn(
         { name: "role_id", referencedColumnName: "role_id" }
-    ])
-    role: Role
+    )
+    role: Relation<Role>
 }

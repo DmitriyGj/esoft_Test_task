@@ -1,5 +1,5 @@
 import { Entity, PrimaryGeneratedColumn, Column, OneToOne, JoinColumn, ManyToOne } from "typeorm";
-import { user } from "./User.entity";
+import { User } from "./User.entity";
 
 @Entity()
 export class User_details {
@@ -12,7 +12,7 @@ export class User_details {
     @Column()
     last_name:string
   
-    @ManyToOne(() => user)
+    @ManyToOne(() => User)
     @JoinColumn()
-    supervisor: user
+    supervisor: User
 }

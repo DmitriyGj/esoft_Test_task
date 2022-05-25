@@ -7,13 +7,13 @@ import { Role } from './Role.entity';
 
 export class User {
     @PrimaryGeneratedColumn()
-    user_id: number
+    task_id: number
 
     @Column()
-    login: string
+    title: string
 
     @Column()
-    password: string
+    date_range: Date
 
     @ManyToOne(() => Role)
     @JoinColumn(

@@ -6,11 +6,9 @@ DataBase.initialize().then(() => console.log('asds'))
 const app = express();
 app.get('/', async (requset, response) => {
     const result = await DataBase.getRepository(User).find({
-        where:{
-            user_id:1
-        },
         relations:{
-            role:true
+            role:true, 
+            user_details:true
         }
     });
     console.log(result)

@@ -8,7 +8,4 @@ export class Role {
 
     @Column()
     role_name: string
-
-    @OneToMany(() => User, user => user.role)
-    employes:Role[]
 }

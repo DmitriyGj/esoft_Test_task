@@ -12,7 +12,7 @@ const genirateAccessToken = (info) =>{
     const payload = {
         info
     };
-    const token = sign(payload,'7',{expiresIn:'24h'});
+    const token = sign(payload,'7',{expiresIn:240*60});
     return token;
 }
 

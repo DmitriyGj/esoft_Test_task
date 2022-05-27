@@ -16,7 +16,7 @@ router.get('/forsupervisor',
 
 router.post('/',authmiddleware , TaskController.postNewTask);
 router.delete('/:id', authmiddleware, TaskController.deleteTask);
-router.put('/:id',authmiddleware, TaskController.putTask )
+router.put('/:id', TaskController.putTask )
 
 
 export default router;

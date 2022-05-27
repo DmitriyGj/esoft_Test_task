@@ -34,21 +34,24 @@ class TaskController {
                 where:{
                     executor: user.user_details,
                     end_date: Between(startOfDay(date), endOfDay(date))
-                }
+                },
+                relations:{executor:true}
             });
 
         return res.status(200).json(result);
     }
 
     async getTasksOnWeek(req:Request, res:Response, next){
-        const user = verify(req.headers.authorization,'7') as User;
+        const user = (verify(req.headers.authorization,'7') as Token).info;
         const startOfRange = new Date();
         const endOfRange = addDays(startOfRange, 7);
+
         const result = await task_repository.find({
                 where:{
                     end_date:Between(startOfDay(startOfRange), endOfDay(endOfRange)),
                     executor: user.user_details
-                }
+                },
+                relations:{executor:true}
             });
         return res.status(200).json(result) 
     }
@@ -60,8 +63,10 @@ class TaskController {
                 where:{
                     end_date:MoreThan(startOfRange),
                     executor: user.user_details
-                }
+                },
+                relations:{executor:true}
             });
+        console.log(result)
         return res.status(200).json(result) 
     }
 
@@ -90,16 +95,21 @@ class TaskController {
 
     async putTask(req: Request, res: Response, next){
         try{
-            const body: Partial<Task> = req.body;
+            const body: Partial<Task> & {'executor_id':number} = req.body;
+            console.log(req.body)
             const {id} = req.params;
-            const {status, priority} = body;
+            const {status, priority, executor:executroFromBody, executor_id} = body;
             const update_date = new Date().toDateString();
             const task = await task_repository.findOne({where:{task_id:+id}});
+            const executor = await user_detailsController.getOneUserDetailsByParams({user_details_id: executor_id })
+            console.log(executor)
             const updatedTask = task_repository.create({...task,...body,
-                                            status: Status[status] || task.status, 
-                                            priority: Priority[priority] || task.priority, 
+                                            status: status|| task.status, 
+                                            priority: priority || task.priority,
+                                            executor, 
                                             update_date })
             const result = await task_repository.save(updatedTask);
+            
             res.status(200).json(result);
         }
         catch(e){
@@ -130,11 +140,11 @@ class TaskController {
             const user = (verify(req.headers.authorization,'7') as Token).info;
             console.log(user)
             const tasks = await task_repository
-                            .createQueryBuilder('Task').select('Task')
+                            .createQueryBuilder('Task')
                             .leftJoinAndSelect('Task.executor','user_details')
                             .where('user_details.supervisor_id = :supervisor_id', {supervisor_id:user.user_id})
-                            .groupBy('Task.task_id, user_details.user_details_id')
-                            .execute();
+                            .groupBy('Task.task_id, user_details.user_details_id').getMany()
+
             console.log(tasks)
             return res.status(200).json(tasks);
         }

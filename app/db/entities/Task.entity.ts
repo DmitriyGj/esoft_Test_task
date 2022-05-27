@@ -3,16 +3,16 @@ import { User_details } from './UserDetails.entity';
 import { User } from './User.entity';
 
 export enum Status{
-    ToDo= "К выполнению",
-    Doing = "Выполняется",
-    Complete = "Выполнена",
-    Cancel = "Отменена"
+    "К выполнению" = `"К выполнению"`,
+    "Выполняется" = '"Выполняется"',
+    "Выполнена" = '"Выполнена"',
+    "Отменена"= '"Отменена"'
 }
 
 export enum Priority{
-    Low = "Низкий",
-    Medium = "Средний",
-    High = "Высокий"
+    "Низкий" = '"Низкий"',
+    "Средний" = '"Средний"',
+    "Высокий" = '"Высокий"'
 }
 
 @Entity()
@@ -24,18 +24,11 @@ export class Task {
     @Column()
     title: string
 
-    @Column({
-        type:'enum',
-        enum: Status,
-        default: Status.ToDo
-    })
-    status:Status
+    @Column()
+    status:string
 
-    @Column({
-        type:'enum',
-        enum: Priority
-    })
-    priority:Priority
+    @Column()
+    priority:string
 
     @Column({type:'date'})
     creation_date: string

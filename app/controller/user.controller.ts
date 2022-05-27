@@ -17,20 +17,15 @@ const genirateAccessToken = (info) =>{
 }
 
 class UserController {
-
-    async getOneByParams(params: FindOptionsWhere<User>){
-        return await user_repository.findOne({where:params})
-    }
-
     async registrate(req: Request, res: Response, next: NextFunction)  {
-        const {login, password, role_id, ...user_details} = req.body;
+        const {login, password, role_id, supervisor_id, ...user_details} = req.body;
 
         const uniqeControl = await user_repository.findOne({where:{login}});        
         if(uniqeControl){
             return res.status(400).send({message:'Пользователь с таким логином существует'});
         }
         const role = await  RoleController.getOneByParams({role_id});
-        const supervisor = await this.getOneByParams({user_id:user_details.supervisor_id});
+        const supervisor = await user_repository.findOne({where:{user_id:supervisor_id}});
 
         const newUserDetails = User_detailsController.create({...user_details, supervisor});
 
@@ -46,12 +41,16 @@ class UserController {
                 return res.status(400).json({message:'Что-то пошло не так'})
             }
         }
-        res.status(400).send({message:'Что-то пошло не так'});
+        res.status(400).json({message:'Что-то пошло не так'});
     }
 
     async authorize(req: Request, res: Response, next: NextFunction){
         const {login, password} = req.body;
-        const user = await user_repository.findOne({where:{login}, relations:{user_details:true}});
+        const user = await user_repository.findOne({    
+                where:{login}, 
+                relations:{user_details:true, role:true}
+            });
+        console.log(user)
         if(!user){
             return res.status(404).json({message:'Пользователь не найден'});
         }

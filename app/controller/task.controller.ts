@@ -1,42 +1,53 @@
 import DataBase from '../db/datasource';
 import {Task, User} from '../db/entities';
 import { addDays, endOfDay, startOfDay } from 'date-fns';
-import { Between, FindOperator, FindOptionsWhere, MoreThan, MoreThanOrEqual } from 'typeorm';
+import { Between, FindOptionsWhere, MoreThan } from 'typeorm';
 import { Request, Response } from 'express';
 import {verify} from 'jsonwebtoken';
 import user_detailsController from './user_details.controller';
+import { Status, Priority } from '../db/entities/Task.entity';
 
 const task_repository = DataBase.getRepository(Task);
+type Token = {info: User}
 
 class TaskController {
-    async getTasksByParams(params: FindOptionsWhere<Task>) {
-        return await task_repository.find({where:{...params}})
-    }
-
-    createTask(params: Partial<Task>){
-        return task_repository.create(params);
-    }
-
-    async getOneByParams(params: Partial<Task>){
-        return await task_repository.findOne({where:params})
-    }
-
-    async saveTask(task: Partial<Task>){
-        return await task_repository.save(task);
+    async getTasks(req: Request, res: Response, next){
+        const user = (verify(req.headers.authorization,'7') as Token).info;
+        const result = await task_repository.find({
+            where:{
+                executor: user.user_details
+            }, 
+            order:{
+                update_date: 'ASC'
+            }
+        });
+        return res.status(200).json(result);
     }
 
     async getTasksOnToday(req:Request, res: Response, next){
-        const user = verify(req.headers.authorization,'7') as User;
-        return await this.getTasksByParams({end_date: startOfDay(new Date()),executor:user.user_details});
+        const user = (verify(req.headers.authorization,'7') as Token).info;
+        const date = new Date();
+        console.log('hi')
+        console.log(user.user_details)
+        const result =  await task_repository.find({
+                where:{
+                    executor: user.user_details,
+                    end_date: Between(startOfDay(date), endOfDay(date))
+                }
+            });
+
+        return res.status(200).json(result);
     }
 
     async getTasksOnWeek(req:Request, res:Response, next){
         const user = verify(req.headers.authorization,'7') as User;
         const startOfRange = new Date();
         const endOfRange = addDays(startOfRange, 7);
-        const result = await this.getTasksByParams({
-                end_date:Between(startOfDay(startOfRange), endOfDay(endOfRange)),
-                executor: user.user_details
+        const result = await task_repository.find({
+                where:{
+                    end_date:Between(startOfDay(startOfRange), endOfDay(endOfRange)),
+                    executor: user.user_details
+                }
             });
         return res.status(200).json(result) 
     }
@@ -44,22 +55,34 @@ class TaskController {
     async getTasksOnFuture(req:Request, res:Response, next){
         const user = verify(req.headers.authorization,'7') as User;
         const startOfRange = addDays(startOfDay(new Date()),7);
-        const result = await this.getTasksByParams({
-            end_date:MoreThan(startOfRange),
-            executor: user.user_details});
+        const result = await task_repository.find({
+                where:{
+                    end_date:MoreThan(startOfRange),
+                    executor: user.user_details
+                }
+            });
         return res.status(200).json(result) 
     }
 
     async postNewTask(req:Request, res:Response, next){
-        const user = verify(req.headers.authorization,'7') as User;
-        const taskbody: Partial<Task> = req.body;
-        const executor = await user_detailsController.getOneUserDetailsByParams({user_details_id:taskbody.executor.user_details_id})
-        const newTask = this.createTask({...taskbody,creator:user, executor});
+        const user = (verify(req.headers.authorization,'7') as Token).info;
+        console.log(user)
+        const creation_date = new Date().toDateString();
+        const taskbody: Partial<Omit<Task, 'executor'> & {'executor_id':number}>  = req.body;
+        const {priority, status} = taskbody;
+        const executor = await user_detailsController.getOneUserDetailsByParams({user_details_id:taskbody.executor_id})
+        const newTask = task_repository.create({...taskbody,creator:user,
+                                creation_date,
+                                update_date:creation_date,
+                                executor, 
+                                priority:Priority[priority],
+                                status: Status[status]});
         try{
-            const result = await this.saveTask(newTask)
+            const result = await task_repository.save(newTask)
             res.json(result);
         }
         catch(e){
+            console.log(e)
             return res.status(400).json({message:'Что-то пошло не так'});
         }
     }
@@ -67,18 +90,30 @@ class TaskController {
     async putTask(req: Request, res: Response, next){
         try{
             const body: Partial<Task> = req.body;
+            const {id} = req.params;
+            const {status, priority} = body;
             const update_date = new Date().toDateString();
-            const task = await this.getOneByParams({task_id:body.task_id});
-            const updatedTask = this.createTask({...task,...body, update_date })
-            this.saveTask(updatedTask);
+            const task = await task_repository.findOne({where:{task_id:+id}});
+            const updatedTask = task_repository.create({...task,...body,
+                                            status: Status[status] || task.status, 
+                                            priority: Priority[priority] || task.priority, 
+                                            update_date })
+            const result = await task_repository.save(updatedTask);
+            res.status(200).json(result);
         }
         catch(e){
-            res.status(400).json({message:'Что-то пошло не так'})
+            console.log(e)
+            res.status(400).json({message:'Что-то пошло не так'});
         }
     }
 
     async deleteTask(req: Request, res:Response, next){
-        const task: Task = req.body
+        const {id} = req.params;
+        const task = await task_repository.find({
+            where:{
+                task_id:+id
+            }
+        });
         try {
             const result = await task_repository.remove(task);
             return res.status(200).json(result);
@@ -86,6 +121,25 @@ class TaskController {
         catch(e){
             console.log(e);
             return res.status(400).json({message:'Что-то пошло не так'});
+        }
+    }
+
+    async getTasksGroupedExecutors(req: Request, res:Response, next){
+        try{
+            const user = (verify(req.headers.authorization,'7') as Token).info;
+            console.log(user)
+            const tasks = await task_repository
+                            .createQueryBuilder('Task').select('Task')
+                            .leftJoinAndSelect('Task.executor','user_details')
+                            .where('user_details.supervisor_id = :supervisor_id', {supervisor_id:user.user_id})
+                            .groupBy('Task.task_id, user_details.user_details_id')
+                            .execute();
+            console.log(tasks)
+            return res.status(200).json(tasks);
+        }
+        catch(e){
+            console.log(e);
+            return res.status(400);
         }
     }
 }

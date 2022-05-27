@@ -48,7 +48,7 @@ export class Task {
     })
     executor:Relation<User_details>
 
-    @OneToOne(() => User)
+    @ManyToOne(() => User)
     @JoinColumn({
         name:'creator_id', referencedColumnName:'user_id'
     })

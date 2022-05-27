@@ -46,12 +46,11 @@ class UserController {
 
     async authorize(req: Request, res: Response, next: NextFunction){
         const {login, password} = req.body;
-        console.log(req.body)
-        console.log(login, password)
         const user = await user_repository.findOne({    
                 where:{login}, 
-                relations:{user_details:true, role:true}
+                relations:['user_details','role','user_details.supervisor']
             });
+        console.log(user)
         if(!user){
             return res.status(400).json({message:'Пользователь не найден'});
         }

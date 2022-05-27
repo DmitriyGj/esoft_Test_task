@@ -20,8 +20,9 @@ class TaskController {
             order:{
                 update_date: 'ASC'
             },
-            relations:{executor:true}
+            relations:{executor:true,}
         });
+        console.log(result)
         return res.status(200).json(result);
     }
 
@@ -35,7 +36,7 @@ class TaskController {
                     executor: user.user_details,
                     end_date: Between(startOfDay(date), endOfDay(date))
                 },
-                relations:{executor:true}
+                relations:{executor:true, creator:true}
             });
 
         return res.status(200).json(result);
@@ -57,7 +58,7 @@ class TaskController {
     }
 
     async getTasksOnFuture(req:Request, res:Response, next){
-        const user = verify(req.headers.authorization,'7') as User;
+        const user = (verify(req.headers.authorization,'7') as Token).info;
         const startOfRange = addDays(startOfDay(new Date()),7);
         const result = await task_repository.find({
                 where:{
@@ -77,7 +78,8 @@ class TaskController {
         const taskbody: Partial<Omit<Task, 'executor'> & {'executor_id':number}>  = req.body;
         const {priority, status} = taskbody;
         const executor = await user_detailsController.getOneUserDetailsByParams({user_details_id:taskbody.executor_id})
-        const newTask = task_repository.create({...taskbody,creator:user,
+        const newTask = task_repository.create({...taskbody,
+                                creator:user,
                                 creation_date,
                                 update_date:creation_date,
                                 executor, 

@@ -15,9 +15,9 @@ export class User_details {
     @Column()
     last_name:string
   
-    @OneToOne(()=> User, user => user.user_details)
+    @ManyToOne(()=> User, user => user.user_details, {nullable:true})
     @JoinColumn({
-        name:'supervisor_id', referencedColumnName:'user_id'
+        name:'supervisor_id',referencedColumnName:'user_id'
     })
     supervisor: Relation<User>
 }

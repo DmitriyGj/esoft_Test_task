@@ -20,7 +20,7 @@ class TaskController {
             order:{
                 update_date: 'ASC'
             },
-            relations:{executor:true,}
+            relations:{executor:true,creator:true}
         });
         console.log(result)
         return res.status(200).json(result);
@@ -52,7 +52,7 @@ class TaskController {
                     end_date:Between(startOfDay(startOfRange), endOfDay(endOfRange)),
                     executor: user.user_details
                 },
-                relations:{executor:true}
+                relations:{executor:true, creator:true}
             });
         return res.status(200).json(result) 
     }
@@ -65,7 +65,7 @@ class TaskController {
                     end_date:MoreThan(startOfRange),
                     executor: user.user_details
                 },
-                relations:{executor:true}
+                relations:{executor:true, creator:true}
             });
         console.log(result)
         return res.status(200).json(result) 

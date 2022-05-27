@@ -12,7 +12,7 @@ const genirateAccessToken = (info) =>{
     const payload = {
         info
     };
-    const token = sign(payload,'7',{expiresIn:60*24});
+    const token = sign(payload,'7',{expiresIn:'24h'});
     return token;
 }
 
@@ -46,13 +46,14 @@ class UserController {
 
     async authorize(req: Request, res: Response, next: NextFunction){
         const {login, password} = req.body;
+        console.log(req.body)
+        console.log(login, password)
         const user = await user_repository.findOne({    
                 where:{login}, 
                 relations:{user_details:true, role:true}
             });
-        console.log(user)
         if(!user){
-            return res.status(404).json({message:'Пользователь не найден'});
+            return res.status(400).json({message:'Пользователь не найден'});
         }
         const validatePassword = compareSync(password,user.password)
         if(!validatePassword){
@@ -60,6 +61,11 @@ class UserController {
         }
         const token = genirateAccessToken(user);
         return res.json(token);
+    }
+
+    async getUsers(req: Request, res: Response){
+        const users = user_repository.find({relations:{user_details: true}});
+        res.status(200).json(users);
     }
 }
 

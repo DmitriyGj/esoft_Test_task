@@ -21,6 +21,11 @@ class User_detailsController {
     async delete(params:  User_details){
         return user_detils_reopsitory.remove({...params});
     }
+
+    async getUsersDeatils(req: Request, res: Response){
+        const users_details = await user_detils_reopsitory.find();
+        return res.status(200).json(users_details);
+    }
 }
 
 export default new User_detailsController();

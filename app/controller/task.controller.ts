@@ -19,7 +19,8 @@ class TaskController {
             }, 
             order:{
                 update_date: 'ASC'
-            }
+            },
+            relations:{executor:true}
         });
         return res.status(200).json(result);
     }
